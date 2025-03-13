@@ -1,2 +1,4 @@
 # curse
-Dedicated elixir code editor with A.I integration
+
+An Elixir code editor with A.I assist.
+
