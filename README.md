@@ -2,6 +2,10 @@
 
 An Elixir code editor with A.I assist.
 
+# screenshot
+
+![screenshot](/screenshot.png)
+
 # install
 
 Requires [repliate.com](https://replicate.com) and an API token.
