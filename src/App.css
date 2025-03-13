@@ -271,8 +271,150 @@ body {
 }
 
 /* Override any Monaco editor background */
-.monaco-editor, 
+.monaco-editor,
 .monaco-editor .margin,
 .monaco-editor-background {
   background-color: #1E1E1E !important;
+}
+
+/* Add to App.css */
+.editor-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.main-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #333333;
+  border-bottom: 1px solid #474747;
+  z-index: 5;
+}
+
+.toolbar-left, .toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.current-file {
+  color: #d4d4d4;
+  font-size: 13px;
+  margin-left: 8px;
+}
+
+.settings-button, .ai-button {
+  background-color: transparent;
+  color: #d4d4d4;
+  border: 1px solid #474747;
+  border-radius: 3px;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.settings-button:hover, .ai-button:hover {
+  background-color: #3c3c3c;
+}
+
+.ai-button {
+  background-color: rgba(14, 99, 156, 0.2);
+  border-color: #0e639c;
+}
+
+.ai-button:hover {
+  background-color: rgba(14, 99, 156, 0.3);
+}
+
+.ai-button.active {
+  background-color: #0e639c;
+  color: white;
+}
+
+.editor-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.editor-pane {
+  transition: width 0.3s ease;
+}
+
+.editor-pane.full-width {
+  width: 100%;
+}
+
+.editor-pane.with-ai {
+  width: 100%;
+  border-right: 1px solid #474747;
+}
+
+.ai-pane {
+  width: 50%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  right: 0px;
+  height: 600px;
+  overflow-y: scroll
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .editor-pane.with-ai {
+    width: 50%;
+  }
+
+  .ai-pane {
+    width: 50%;
+  }
+}
+
+@media (max-width: 768px) {
+  .editor-pane.with-ai {
+    width: 100%;
+    height: 50%;
+  }
+
+  .ai-pane {
+    width: 100%;
+    height: 50%;
+  }
+
+  .editor-container {
+    flex-direction: column;
+  }
+}
+
+/* Sidebar toggle button */
+.sidebar-toggle {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  width: 24px;
+  height: 24px;
+  background-color: #333333;
+  color: #d4d4d4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #474747;
+}
+
+.sidebar-toggle:hover {
+  background-color: #3c3c3c;
 }

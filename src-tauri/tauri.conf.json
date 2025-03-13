@@ -1,6 +1,6 @@
 {
   "$schema": "https://v2.tauri.app/schema.json",
-  "identifier": "com.elixir-editor.dev",
+  "identifier": "com.curse.dev",
   "productName": "curse",
   "version": "0.1.0",
   "build": {

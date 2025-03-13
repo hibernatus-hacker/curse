@@ -1,7 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { readDir } from '@tauri-apps/plugin-fs';
+// import { readDir } from '@tauri-apps/plugin-fs';
+// import { open } from '@tauri-apps/plugin-dialog';
+
 import { open } from '@tauri-apps/plugin-dialog';
+import { readDir } from '@tauri-apps/plugin-fs';
 
 function FileExplorer({ onFileSelect }) {
   const [currentPath, setCurrentPath] = useState('');
@@ -177,7 +180,7 @@ function FileExplorer({ onFileSelect }) {
   return (
     <div className="file-explorer">
       <div className="explorer-header">
-        <h3>Explorer</h3>
+        <h3>curse</h3>
         <button onClick={selectDirectory}>
           {currentPath ? 'Change Folder' : 'Open Folder'}
         </button>

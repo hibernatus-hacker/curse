@@ -8,6 +8,8 @@ Install [tauri](https://tauri.app/start/prerequisites/)
 
 ```sh
 npm i
+npm run tauri add dialog\
+npm run tauri add fs
 npm run tauri dev
 ```
 

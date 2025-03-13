@@ -1,0 +1,187 @@
+/* Settings.css */
+.settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.settings-modal {
+  background-color: #252526;
+  border-radius: 6px;
+  width: 600px;
+  max-width: 90%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid #474747;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #474747;
+}
+
+.settings-header h2 {
+  margin: 0;
+  color: #e0e0e0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.close-button:hover {
+  color: #e0e0e0;
+}
+
+.settings-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.settings-section {
+  margin-bottom: 24px;
+}
+
+.settings-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #e0e0e0;
+  font-weight: 500;
+  border-bottom: 1px solid #333;
+  padding-bottom: 8px;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 4px 0;
+}
+
+.setting-item label {
+  color: #d4d4d4;
+  font-size: 14px;
+}
+
+.setting-item input[type="number"],
+.setting-item select {
+  background-color: #3c3c3c;
+  color: #d4d4d4;
+  border: 1px solid #474747;
+  border-radius: 3px;
+  padding: 6px 8px;
+  width: 150px;
+  font-size: 14px;
+}
+
+.setting-item.checkbox {
+  justify-content: flex-start;
+}
+
+.setting-item.checkbox input {
+  margin-right: 10px;
+}
+
+.settings-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-top: 1px solid #474747;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.save-button, .cancel-button, .reset-button {
+  padding: 8px 16px;
+  border-radius: 3px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+}
+
+.save-button {
+  background-color: #0e639c;
+  color: white;
+}
+
+.save-button:hover {
+  background-color: #1177bb;
+}
+
+.cancel-button {
+  background-color: #3c3c3c;
+  color: #d4d4d4;
+}
+
+.cancel-button:hover {
+  background-color: #4c4c4c;
+}
+
+.reset-button {
+  background-color: transparent;
+  color: #d4d4d4;
+  border: 1px solid #474747;
+}
+
+.reset-button:hover {
+  background-color: #333;
+}
+
+.api-token-input {
+  width: 250px !important;
+  font-family: monospace;
+  letter-spacing: 1px;
+}
+
+.setting-warning {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: rgba(255, 204, 0, 0.1);
+  border-left: 3px solid #fc0;
+  border-radius: 3px;
+}
+
+.setting-warning p {
+  margin: 0 0 5px 0;
+  color: #fc0;
+  font-size: 13px;
+}
+
+.setting-help {
+  font-size: 12px !important;
+  color: #999 !important;
+}
+
+.setting-help a {
+  color: #3794ff;
+  text-decoration: none;
+}
+
+.setting-help a:hover {
+  text-decoration: underline;
+}
