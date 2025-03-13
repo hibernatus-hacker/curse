@@ -4,9 +4,10 @@ import '../styles/AIAssistant.css';
 
 const AIAssistant = forwardRef(({ isEnabled, apiToken, currentFile, fileContent, onClose }, ref) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [feedback, setFeedback] = useState('AI Assistant activated! Panel is working correctly.');
+  const [feedback, setFeedback] = useState('');
   const [error, setError] = useState(null);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [refactoredCode, setRefactoredCode] = useState('');
   const feedbackRef = useRef(null);
 
   // Expose the requestFeedback method to parent components
@@ -20,15 +21,8 @@ const AIAssistant = forwardRef(({ isEnabled, apiToken, currentFile, fileContent,
     }
   }));
 
-  // Set initial message when component mounts
-  useEffect(() => {
-    console.log("Setting initial feedback");
-    setFeedback('AI Assistant activated! Panel is working correctly.\n\nReady to analyze your code.');
-  }, []);
-
   // Auto-scroll to bottom of feedback when it updates
   useEffect(() => {
-    console.log("Feedback updated:", feedback);
     if (feedbackRef.current) {
       feedbackRef.current.scrollTop = feedbackRef.current.scrollHeight;
     }
@@ -48,6 +42,48 @@ const AIAssistant = forwardRef(({ isEnabled, apiToken, currentFile, fileContent,
     return parts[parts.length - 1];
   };
 
+  // Function to format code for display
+  const formatCodeForDisplay = (code) => {
+    if (!code) return '';
+
+    // Escape HTML to prevent XSS
+    const escapedCode = code
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+    return `<pre class="formatted-code">${escapedCode}</pre>`;
+  };
+
+  // Function to clean code output
+  const cleanCodeOutput = (text) => {
+    // Remove markdown code blocks if present
+    let cleanedText = text;
+
+    // Remove ```language and ``` markers
+    cleanedText = cleanedText.replace(/```[\w-]*\n/g, '');
+    cleanedText = cleanedText.replace(/```/g, '');
+
+    // Remove any explanatory text before or after the code
+    // This is a simple heuristic - might need adjustment based on actual output
+    const lines = cleanedText.split('\n');
+    let codeStarted = false;
+    let codeLines = [];
+
+    for (const line of lines) {
+      // Skip empty lines at the beginning
+      if (!codeStarted && line.trim() === '') continue;
+
+      // Consider code has started once we see a non-empty line
+      codeStarted = true;
+      codeLines.push(line);
+    }
+
+    return codeLines.join('\n');
+  };
+
   // Function to request AI feedback
   const requestFeedback = async () => {
     if (!isEnabled || !apiToken) {
@@ -61,16 +97,14 @@ const AIAssistant = forwardRef(({ isEnabled, apiToken, currentFile, fileContent,
     }
 
     setIsLoading(true);
-    setFeedback('Starting analysis...\n\nConnecting to AI service...');
+    setFeedback('');
     setError(null);
     setIsStreaming(true);
+    setRefactoredCode('');
 
     try {
       const extension = getFileExtension(currentFile);
       const fileName = getFileName(currentFile);
-
-      // Update feedback to show progress
-      setFeedback(prev => `${prev}\n\nPreparing to analyze ${fileName}...`);
 
       // Prepare the prompt with file information
       const prompt = `
@@ -80,15 +114,11 @@ Content:
 ${fileContent}
 \`\`\`
 
-Please provide feedback on this code, including:
-1. Potential bugs or issues
-2. Optimization suggestions
-3. Best practices recommendations
-4. Any other helpful insights
+Please re-write the code making improvements. Only provide the refactored code, no explanations or other text.
 `;
 
       // System prompt from your CLI
-      const systemPrompt = 'You are an expert senior polyglot software developer, architect and engineer providing feedback suggestions etc.';
+      const systemPrompt = 'You are an expert senior polyglot software developer, architect who re-writes and refactors code. You do not give any other output apart from the re-written code provided. Do not include markdown code blocks or language identifiers in your response - just the raw code.';
 
       // Create the request data
       const requestData = {
@@ -101,9 +131,6 @@ Please provide feedback on this code, including:
         stream: true
       };
 
-      // Update feedback to show progress
-      setFeedback(prev => `${prev}\n\nSending request to AI service...`);
-
       console.log("Sending request to create prediction:", {
         apiToken: `${apiToken.substring(0, 5)}...`,
         requestData
@@ -111,9 +138,6 @@ Please provide feedback on this code, including:
 
       // Use the Tauri command to create a prediction
       try {
-        // Update feedback to show we're waiting for the response
-        setFeedback(prev => `${prev}\n\nWaiting for AI response...`);
-
         const response = await invoke('create_prediction', {
           apiToken,
           requestData
@@ -128,9 +152,6 @@ Please provide feedback on this code, including:
         const predictionId = response.id;
         console.log("Prediction created with ID:", predictionId);
 
-        // Update feedback to show we're starting to stream
-        setFeedback(prev => `${prev}\n\nReceived initial response. Starting to stream AI feedback...\n\n--- AI FEEDBACK BELOW ---\n\n`);
-
         // Poll for streaming updates
         await streamPrediction(predictionId);
       } catch (invokeError) {
@@ -141,8 +162,6 @@ Please provide feedback on this code, including:
     } catch (error) {
       console.error('Error getting AI feedback:', error);
       setError(`Error: ${typeof error === 'string' ? error : error.message || 'Unknown error'}`);
-      // Keep the existing feedback but add the error
-      setFeedback(prev => `${prev}\n\nERROR: ${typeof error === 'string' ? error : error.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
       setIsStreaming(false);
@@ -197,11 +216,13 @@ Please provide feedback on this code, including:
           if (outputText) {
             console.log("Extracted output text:", outputText);
 
-            // Replace the placeholder with actual content
-            setFeedback(prev => {
-              const parts = prev.split('--- AI FEEDBACK BELOW ---\n\n');
-              return parts[0] + '--- AI FEEDBACK BELOW ---\n\n' + outputText;
-            });
+            // Clean the code output
+            const cleanedCode = cleanCodeOutput(outputText);
+            setRefactoredCode(cleanedCode);
+
+            // Format and display the code
+            const formattedCode = formatCodeForDisplay(cleanedCode);
+            setFeedback(formattedCode);
           } else {
             console.log("No text could be extracted from output");
           }
@@ -211,9 +232,6 @@ Please provide feedback on this code, including:
         if (data.status === 'succeeded') {
           console.log("Prediction succeeded!");
           completed = true;
-
-          // Add completion message
-          setFeedback(prev => `${prev}\n\n--- END OF AI FEEDBACK ---\n\nAnalysis completed successfully.`);
         } else if (data.status === 'failed') {
           console.error("Prediction failed:", data.error);
           throw new Error(data.error || 'Prediction failed');
@@ -225,40 +243,49 @@ Please provide feedback on this code, including:
       } catch (error) {
         console.error('Error streaming prediction:', error);
         setError(`Streaming error: ${typeof error === 'string' ? error : error.message || 'Unknown error'}`);
-        // Add error to feedback
-        setFeedback(prev => `${prev}\n\nStreaming error: ${typeof error === 'string' ? error : error.message || 'Unknown error'}`);
         completed = true;
       }
     }
 
     if (attempts >= maxAttempts && !completed) {
       setError('Timed out waiting for prediction results');
-      setFeedback(prev => `${prev}\n\nTimed out waiting for prediction results. Please try again.`);
     }
+  };
+
+  // Function to apply refactored code
+  const applyRefactoredCode = () => {
+    // You would need to implement this function to update the file content
+    // This could involve a callback to the parent component or a Tauri command
+    console.log("Applying refactored code:", refactoredCode);
+    // Example: onApplyCode(refactoredCode);
   };
 
   return (
     <div className="ai-assistant">
       <div className="ai-header">
-        <h3>AI Assistant</h3>
+        <h3>AI Code Refactor</h3>
         <div className="ai-controls">
           <button
             className="analyze-button"
             onClick={requestFeedback}
             disabled={isLoading || !isEnabled || !apiToken}
           >
-            {isLoading ? 'Analyzing...' : 'Analyze Code'}
+            {isLoading ? 'Refactoring...' : 'Refactor Code'}
           </button>
+          {refactoredCode && (
+            <button
+              className="apply-button"
+              onClick={applyRefactoredCode}
+              disabled={isLoading}
+            >
+              Apply Changes
+            </button>
+          )}
           <button className="close-assistant" onClick={onClose}>×</button>
         </div>
       </div>
 
       <div className="ai-content" ref={feedbackRef}>
-        {/* Always show feedback div */}
-        <div className="ai-feedback">
-          <pre>{feedback || 'No feedback available'}</pre>
-        </div>
-
         {!isEnabled && (
           <div className="ai-disabled">
             <p>AI integration is disabled. Enable it in Settings.</p>
@@ -280,9 +307,20 @@ Please provide feedback on this code, including:
         {isLoading && (
           <div className="ai-loading">
             <div className="loading-spinner"></div>
-            <p>{isStreaming ? 'Streaming AI feedback...' : 'Requesting AI feedback...'}</p>
+            <p>{isStreaming ? 'Generating refactored code...' : 'Preparing to refactor code...'}</p>
           </div>
         )}
+
+        {/* Always show feedback div */}
+        <div className="ai-feedback">
+          {feedback ? (
+            <div dangerouslySetInnerHTML={{ __html: feedback }} />
+          ) : (
+            <div className="empty-feedback">
+              {!isLoading && 'Click "Refactor Code" to generate improvements'}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -366,7 +366,7 @@ body {
   flex-direction: column;
   position: fixed;
   right: 0px;
-  height: 600px;
+  height: 100%;
   overflow-y: scroll
 }
 

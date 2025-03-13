@@ -1,9 +1,23 @@
-// #// Prevents additional console window on Windows in release, DO NOT REMOVE!!
+// Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
+use reqwest::{Client, header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE}};
 use serde::{Deserialize, Serialize};
-use tauri::{command, Manager}; // Add Manager trait here
+use std::sync::OnceLock;
+use tauri::{command, Manager};
+
+// Global HTTP client for connection pooling
+static CLIENT: OnceLock<Client> = OnceLock::new();
+
+fn get_client() -> &'static Client {
+    CLIENT.get_or_init(|| {
+        Client::builder()
+            .pool_idle_timeout(std::time::Duration::from_secs(30))
+            .timeout(std::time::Duration::from_secs(60))
+            .build()
+            .expect("Failed to create HTTP client")
+    })
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ReplicateRequest {
@@ -26,59 +40,33 @@ async fn create_prediction(
     api_token: String,
     request_data: ReplicateRequest,
 ) -> Result<ReplicateResponse, String> {
-    println!("Creating prediction with token: {}...", if api_token.len() > 5 { &api_token[0..5] } else { &api_token });
-    println!("Request data: {:?}", request_data);
-
-    let client = reqwest::Client::new();
+    let client = get_client();
 
     let mut headers = HeaderMap::new();
     headers.insert(
         AUTHORIZATION,
-        HeaderValue::from_str(&format!("Token {}", api_token)).map_err(|e| {
-            println!("Error creating auth header: {}", e);
-            e.to_string()
-        })?,
+        HeaderValue::from_str(&format!("Token {}", api_token))
+            .map_err(|e| e.to_string())?,
     );
     headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
 
-    println!("Sending request to Replicate API...");
     let response = client
         .post("https://api.replicate.com/v1/predictions")
         .headers(headers)
         .json(&request_data)
         .send()
         .await
-        .map_err(|e| {
-            println!("Error sending request: {}", e);
-            e.to_string()
-        })?;
+        .map_err(|e| e.to_string())?;
 
     let status = response.status();
-    println!("Received response with status: {}", status);
 
     if !status.is_success() {
-        let error_text = response.text().await.map_err(|e| {
-            println!("Error reading error response: {}", e);
-            e.to_string()
-        })?;
-        println!("API error: {} - {}", status, error_text);
+        let error_text = response.text().await.map_err(|e| e.to_string())?;
         return Err(format!("API error ({}): {}", status, error_text));
     }
 
-    let response_text = response.text().await.map_err(|e| {
-        println!("Error reading response text: {}", e);
-        e.to_string()
-    })?;
-
-    println!("Response text: {}", response_text);
-
-    let response_data: ReplicateResponse = serde_json::from_str(&response_text).map_err(|e| {
-        println!("Error parsing JSON: {}", e);
-        e.to_string()
-    })?;
-
-    println!("Parsed response: {:?}", response_data);
-    Ok(response_data)
+    response.json::<ReplicateResponse>().await
+        .map_err(|e| e.to_string())
 }
 
 #[command]
@@ -86,20 +74,15 @@ async fn get_prediction(
     api_token: String,
     prediction_id: String,
 ) -> Result<ReplicateResponse, String> {
-    println!("Getting prediction {} with token: {}...", prediction_id, if api_token.len() > 5 { &api_token[0..5] } else { &api_token });
-
-    let client = reqwest::Client::new();
+    let client = get_client();
 
     let mut headers = HeaderMap::new();
     headers.insert(
         AUTHORIZATION,
-        HeaderValue::from_str(&format!("Token {}", api_token)).map_err(|e| {
-            println!("Error creating auth header: {}", e);
-            e.to_string()
-        })?,
+        HeaderValue::from_str(&format!("Token {}", api_token))
+            .map_err(|e| e.to_string())?,
     );
 
-    println!("Sending request to get prediction status...");
     let response = client
         .get(&format!(
             "https://api.replicate.com/v1/predictions/{}",
@@ -108,49 +91,26 @@ async fn get_prediction(
         .headers(headers)
         .send()
         .await
-        .map_err(|e| {
-            println!("Error sending request: {}", e);
-            e.to_string()
-        })?;
+        .map_err(|e| e.to_string())?;
 
     let status = response.status();
-    println!("Received response with status: {}", status);
 
     if !status.is_success() {
-        let error_text = response.text().await.map_err(|e| {
-            println!("Error reading error response: {}", e);
-            e.to_string()
-        })?;
-        println!("API error: {} - {}", status, error_text);
+        let error_text = response.text().await.map_err(|e| e.to_string())?;
         return Err(format!("API error ({}): {}", status, error_text));
     }
 
-    let response_text = response.text().await.map_err(|e| {
-        println!("Error reading response text: {}", e);
-        e.to_string()
-    })?;
-
-    println!("Response text: {}", response_text);
-
-    let response_data: ReplicateResponse = serde_json::from_str(&response_text).map_err(|e| {
-        println!("Error parsing JSON: {}", e);
-        e.to_string()
-    })?;
-
-    println!("Parsed response: {:?}", response_data);
-    Ok(response_data)
+    response.json::<ReplicateResponse>().await
+        .map_err(|e| e.to_string())
 }
 
 fn main() {
-    println!("Starting Elixir Editor application...");
-
     tauri::Builder::default()
         .setup(|app| {
             #[cfg(debug_assertions)]
             {
                 let window = app.get_webview_window("main").unwrap();
                 window.open_devtools();
-                println!("DevTools opened for debugging");
             }
             Ok(())
         })

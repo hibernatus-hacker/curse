@@ -3,9 +3,6 @@ import Editor from '@monaco-editor/react';
 
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
-/*
-import { open, save } from '@tauri-apps/plugin-dialog';
-import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';*/
 
 function ElixirEditor({ currentFile, initialContent, settings, onSave }) {
   const editorRef = useRef(null);
